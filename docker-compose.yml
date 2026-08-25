@@ -1,0 +1,32 @@
+---
+# wiki-kit deployment (HANDOFF §7/§8). The node provides bundles.yml next to
+# this file (or set BUNDLES_YML). cloudflared + mcp services land at step 9;
+# until then port 8080 is exposed for local/LAN access.
+services:
+  builder:
+    build: .
+    environment:
+      GIT_TOKEN: "${GIT_TOKEN:-}"
+      INTERVAL: "${INTERVAL:-}"
+    volumes:
+      - "${BUNDLES_YML:-./bundles.yml}:/etc/wiki/bundles.yml:ro"
+      - bundles:/bundles
+      - site:/site
+      - state:/state
+    restart: unless-stopped
+
+  web:
+    image: caddy:2.11.4-alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - bundles:/bundles:ro
+      - site:/site:ro
+      - state:/state:ro
+    restart: unless-stopped
+
+volumes:
+  bundles:
+  site:
+  state:

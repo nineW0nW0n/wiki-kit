@@ -1,0 +1,27 @@
+# wiki-kit web tier (HANDOFF §8). Same URL, two representations:
+#   path ends .md  -> raw file from /bundles (agents)
+#   otherwise      -> Quartz-built HTML from /site (humans)
+# Listens on the compose network only; cloudflared is the way in (step 9).
+# /mcp/* routing lands at step 9.
+:8080 {
+	@git path_regexp \.git(/|$)
+	respond @git 404
+
+	handle /status {
+		root * /state
+		rewrite * /status.json
+		file_server
+	}
+
+	@markdown path *.md
+	handle @markdown {
+		root * /bundles
+		file_server
+	}
+
+	handle {
+		root * /site
+		try_files {path} {path}/index.html {path}.html
+		file_server
+	}
+}

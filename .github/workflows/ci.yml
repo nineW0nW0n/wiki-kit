@@ -25,5 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: smoke (build + lint template + FTS5)
+      - name: smoke (build + lint template + FTS5 + site build)
         run: bash tests/smoke.sh
+      - name: compose test (builder loop + Caddy routes)
+        run: bash tests/compose-test.sh
