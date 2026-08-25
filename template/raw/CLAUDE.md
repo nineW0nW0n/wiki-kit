@@ -1,3 +1,12 @@
+---
+type: guidance
+title: "raw/ rules"
+description: "Immutable sources: naming, frontmatter, status lifecycle."
+tags: [guidance]
+generated:
+  by: wiki-kit/0.1
+  at: "2026-08-25"
+---
 # raw/CLAUDE.md
 
 This directory is the source of truth. It is written by humans and read by you.

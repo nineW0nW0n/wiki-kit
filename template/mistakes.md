@@ -1,3 +1,12 @@
+---
+type: guidance
+title: "mistakes.md"
+description: "One line per correction; graduates to skills on recurrence."
+tags: [guidance]
+generated:
+  by: wiki-kit/0.1
+  at: "2026-08-25"
+---
 # mistakes.md
 
 One line per correction. Format: `YYYY-MM-DD | what I did | what I should have done`.

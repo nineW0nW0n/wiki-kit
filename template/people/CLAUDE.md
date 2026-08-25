@@ -1,3 +1,12 @@
+---
+type: guidance
+title: "people/ rules"
+description: "One page per person or vendor contact; who knows what."
+tags: [guidance]
+generated:
+  by: wiki-kit/0.1
+  at: "2026-08-25"
+---
 # people/CLAUDE.md
 
 One page per person or vendor contact. This directory exists to answer "who knows

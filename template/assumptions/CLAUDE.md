@@ -1,3 +1,12 @@
+---
+type: guidance
+title: "assumptions/ rules"
+description: "How assumption pages are named, structured, and re-statused."
+tags: [guidance]
+generated:
+  by: wiki-kit/0.1
+  at: "2026-08-25"
+---
 # assumptions/CLAUDE.md
 
 One page per assumption. An assumption is a claim a decision depends on that could

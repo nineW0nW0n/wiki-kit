@@ -1,3 +1,12 @@
+---
+type: guidance
+title: "Directory CLAUDE.md template"
+description: "Skeleton for writing a new directory-level CLAUDE.md."
+tags: [guidance]
+generated:
+  by: wiki-kit/0.1
+  at: "2026-08-25"
+---
 # <directory>/CLAUDE.md
 
 <One sentence: what lives here and what does not.>

@@ -1,3 +1,12 @@
+---
+type: guidance
+title: "runbooks/ rules"
+description: "Required headings and frontmatter for executable procedures."
+tags: [guidance]
+generated:
+  by: wiki-kit/0.1
+  at: "2026-08-25"
+---
 # runbooks/CLAUDE.md
 
 A runbook is a procedure a junior can execute alone, in order, without asking anyone.

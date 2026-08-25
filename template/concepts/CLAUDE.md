@@ -1,3 +1,12 @@
+---
+type: guidance
+title: "concepts/ rules"
+description: "How idea, standard, pattern, and analysis pages are written."
+tags: [guidance]
+generated:
+  by: wiki-kit/0.1
+  at: "2026-08-25"
+---
 # concepts/CLAUDE.md
 
 Ideas, standards, patterns, definitions, and filed analyses. Anything that is

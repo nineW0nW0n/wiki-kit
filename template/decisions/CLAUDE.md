@@ -1,3 +1,12 @@
+---
+type: guidance
+title: "decisions/ rules"
+description: "How decision pages link to assumptions and get reviewed."
+tags: [guidance]
+generated:
+  by: wiki-kit/0.1
+  at: "2026-08-25"
+---
 # decisions/CLAUDE.md
 
 One page per decision. A decision is anything a human chose that other pages depend

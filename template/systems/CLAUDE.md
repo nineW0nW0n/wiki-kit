@@ -1,3 +1,12 @@
+---
+type: guidance
+title: "systems/ rules"
+description: "One page per thing that can break; naming and body template."
+tags: [guidance]
+generated:
+  by: wiki-kit/0.1
+  at: "2026-08-25"
+---
 # systems/CLAUDE.md
 
 One page per thing that can break: server, VM, container host, service, application,
