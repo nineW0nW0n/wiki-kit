@@ -7,9 +7,23 @@ on:
   pull_request:
 
 jobs:
-  ci:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: placeholder
-        run: 'true'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: install deps
+        run: pip install -r requirements.txt pytest==9.1.1
+      - name: validate template
+        run: python3 scripts/okf_validate.py template --strict
+      - name: lint tests
+        run: pytest tests/test_lint.py -q
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: smoke (build + lint template + FTS5)
+        run: bash tests/smoke.sh
