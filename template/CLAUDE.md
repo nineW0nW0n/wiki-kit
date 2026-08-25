@@ -2,6 +2,7 @@
 type: guidance
 title: "Bundle agent instructions"
 description: "Root rules for the bundle-writing agent: role, hard rails, workflows, frontmatter, links."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1

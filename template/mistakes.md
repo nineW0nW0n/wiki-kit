@@ -2,6 +2,7 @@
 type: guidance
 title: "mistakes.md"
 description: "One line per correction; graduates to skills on recurrence."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1

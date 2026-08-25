@@ -2,6 +2,7 @@
 type: guidance
 title: "systems/ rules"
 description: "One page per thing that can break; naming and body template."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1

@@ -2,6 +2,7 @@
 type: guidance
 title: "decisions/ rules"
 description: "How decision pages link to assumptions and get reviewed."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1

@@ -2,6 +2,7 @@
 type: guidance
 title: "concepts/ rules"
 description: "How idea, standard, pattern, and analysis pages are written."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1

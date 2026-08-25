@@ -2,6 +2,7 @@
 type: guidance
 title: "people/ rules"
 description: "One page per person or vendor contact; who knows what."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1

@@ -2,6 +2,7 @@
 type: guidance
 title: "raw/ rules"
 description: "Immutable sources: naming, frontmatter, status lifecycle."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1

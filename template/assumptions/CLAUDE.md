@@ -2,6 +2,7 @@
 type: guidance
 title: "assumptions/ rules"
 description: "How assumption pages are named, structured, and re-statused."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1

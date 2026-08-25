@@ -2,6 +2,7 @@
 type: guidance
 title: "Skills directory"
 description: "How mistakes graduate from mistakes.md into skills."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1

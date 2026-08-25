@@ -2,6 +2,7 @@
 type: guidance
 title: "Directory CLAUDE.md template"
 description: "Skeleton for writing a new directory-level CLAUDE.md."
+classification: P1
 tags: [guidance]
 generated:
   by: wiki-kit/0.1
