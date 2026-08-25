@@ -41,7 +41,9 @@ services:
     image: cloudflare/cloudflared:2026.8.2
     command: tunnel run
     environment:
-      TUNNEL_TOKEN: "${TUNNEL_TOKEN:?set in .env on the node}"
+      # compose interpolates even profile-gated services, so no :? guard;
+      # cloudflared itself exits loudly if the token is empty
+      TUNNEL_TOKEN: "${TUNNEL_TOKEN:-}"
     restart: unless-stopped
 
   # Self-hosted runner for the private brain-* repos ONLY — never attach to
