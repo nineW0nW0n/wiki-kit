@@ -54,6 +54,9 @@ run_loop() {
     exec 9>"$STATE_DIR/lock"
     flock -n 9 || { echo "another builder holds $STATE_DIR/lock" >&2; exit 1; }
 
+    # single-purpose container: uid mismatches on mounted repos are fine
+    git config --global --add safe.directory '*'
+
     SITE_HOST="$(cfg site_host)"
     export SITE_HOST BUNDLES_DIR SITE_DIR
     INTERVAL="${INTERVAL:-$(cfg interval_seconds)}"

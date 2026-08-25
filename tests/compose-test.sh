@@ -31,11 +31,6 @@ services:
   builder:
     volumes:
       - $SEED/eng.git:/seed/eng.git:ro
-    environment:
-      # bind-mounted seed repo keeps the host uid; only the test needs this
-      GIT_CONFIG_COUNT: "1"
-      GIT_CONFIG_KEY_0: safe.directory
-      GIT_CONFIG_VALUE_0: "*"
 EOF
 
 echo "== compose up"
