@@ -236,7 +236,7 @@ step "(the long string after 'cloudflared service install')."
 ask_secret TUNNEL_TOKEN "Paste the tunnel token:"
 write_env TUNNEL_TOKEN "$TUNNEL_TOKEN"
 step "Still in the tunnel: Public hostnames → Add:"
-note "    hostname: $SITE_HOST   service: HTTP://web:8080"
+note "    hostname: $SITE_HOST   service: HTTP://web:8090"
 pause "Public hostname added? Press Enter."
 
 # ── 5 ─────────────────────────────────────────────────────────────────────

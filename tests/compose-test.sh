@@ -63,4 +63,10 @@ curl -fs http://localhost:8080/eng/index.md | grep -q "Single Point of Failure" 
 curl -fs http://localhost:8080/eng/viz.html | grep -qi "<html" || {
     echo "FAIL: viz.html missing"; exit 1; }
 
+echo "== mcp refused on the published port (spoofable Cf header)"
+code=$(curl -s -o /dev/null -w '%{http_code}' \
+    -H "Cf-Access-Authenticated-User-Email: spoof@evil.test" \
+    http://localhost:8080/mcp/)
+[ "$code" = 403 ] || { echo "FAIL: /mcp on :8080 returned $code, want 403"; exit 1; }
+
 echo "== compose-test: OK"

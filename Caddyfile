@@ -1,19 +1,14 @@
 # wiki-kit web tier (HANDOFF §8). Same URL, two representations:
 #   path ends .md  -> raw file from /bundles (agents)
 #   otherwise      -> Quartz-built HTML from /site (humans)
-# Listens on the compose network only; cloudflared is the way in (step 9).
-:8080 {
+# Two listeners: :8080 is published for LAN/local use; :8090 is the tunnel
+# entry — never published, reachable only on the compose network, so its
+# Cf-Access-* headers can only come from cloudflared. Point the tunnel's
+# ingress at HTTP://web:8090.
+
+(wiki) {
 	@git path_regexp \.git(/|$)
 	respond @git 404
-
-	# X-Wiki-User is only ever what Cloudflare Access authenticated; a
-	# client-supplied value is dropped, then rewritten from the Cf header.
-	handle /mcp* {
-		reverse_proxy mcp:8081 {
-			header_up -X-Wiki-User
-			header_up X-Wiki-User {header.Cf-Access-Authenticated-User-Email}
-		}
-	}
 
 	handle /status {
 		root * /state
@@ -32,4 +27,24 @@
 		try_files {path} {path}/index.html {path}.html
 		file_server
 	}
+}
+
+# LAN/local: a client here could forge Cf-Access headers, so MCP is refused.
+:8080 {
+	handle /mcp* {
+		respond "MCP is served through the tunnel only" 403
+	}
+	import wiki
+}
+
+# Tunnel-only: X-Wiki-User is only ever what Cloudflare Access
+# authenticated; any client-supplied value is dropped, then rewritten.
+:8090 {
+	handle /mcp* {
+		reverse_proxy mcp:8081 {
+			header_up -X-Wiki-User
+			header_up X-Wiki-User {header.Cf-Access-Authenticated-User-Email}
+		}
+	}
+	import wiki
 }
