@@ -8,6 +8,7 @@ ARG NODE_MAJOR=22
 # git for bundle pulls; Node 22 (Quartz 5 needs node>=22, npm>=10.9.2) via
 # NodeSource, pinned to the major.
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends git ca-certificates curl gnupg \
     && curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
     && apt-get install -y --no-install-recommends nodejs \
