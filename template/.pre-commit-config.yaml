@@ -1,0 +1,14 @@
+---
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: wiki-kit-lint
+        name: wiki-kit lint
+        language: system
+        entry: sh -c 'docker run --rm -v "$PWD:/bundle" {{IMAGE}} lint /bundle'
+        pass_filenames: false
+        files: '\.md$'
