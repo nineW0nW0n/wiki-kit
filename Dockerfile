@@ -1,6 +1,6 @@
 # wiki-kit: one image that lints, builds, and serves brain-* bundles.
 # Builder loop lands at step 6, MCP at step 9.
-FROM python:3.12-slim@sha256:2c941e860699f878900b0edc2403613c234d4b32eda3cc9fa7036991a2a63c4a
+FROM python:3.14-slim@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4
 
 ARG QUARTZ_TAG=v5.0.0
 ARG NODE_MAJOR=22
