@@ -59,6 +59,10 @@ jobs:
           tags: wiki-kit:scan
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      # Gate on what we ship and own: OS packages and our pip deps.
+      # /opt/quartz's node tree is pinned by Quartz's own lockfile (build-time
+      # tooling over trusted markdown); npm's bundled modules ship with the
+      # nodejs deb. Their CVEs are upstream's to fix, not release blockers.
       - name: trivy scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -67,6 +71,7 @@ jobs:
           exit-code: '1'
           severity: CRITICAL,HIGH
           ignore-unfixed: true
+          skip-dirs: /opt/quartz,/usr/lib/node_modules
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
