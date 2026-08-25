@@ -1,14 +1,20 @@
 ---
 # bundles.yml schema (HANDOFF §5). The real file lives on the deployment node
 # only — never in this repo, never in a brain-* repo.
-site_host: wiki.example.com      # decide once, never change; cross-links depend on it
+# site_host: decide once, never change; cross-links depend on it
+site_host: wiki.example.com
 interval_seconds: 900
 bundles:
   - id: eng                      # [a-z0-9-]+, unique; served at /<id>
     repo: https://github.com/<owner>/brain-eng.git
     path: /eng                   # URL prefix; must equal "/" + id
     branch: main
-    groups: [engineering, sysadmin]   # informational; enforced by Cloudflare Access
+    # groups informational; enforced by Cloudflare Access
+    groups: [engineering, sysadmin]
+    # readers: MCP allowlist (Access-authenticated emails). Omit the key
+    # to allow every authenticated caller (incl. service tokens, which
+    # carry no email). Group claims rejected — see HANDOFF §9 VERIFIED.
+    readers: [alice@example.com]
     ticket_regex: '^(INC|CHG|PRB)\d{7}$'
   - id: support
     repo: https://github.com/<owner>/brain-support.git

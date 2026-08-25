@@ -2,10 +2,18 @@
 #   path ends .md  -> raw file from /bundles (agents)
 #   otherwise      -> Quartz-built HTML from /site (humans)
 # Listens on the compose network only; cloudflared is the way in (step 9).
-# /mcp/* routing lands at step 9.
 :8080 {
 	@git path_regexp \.git(/|$)
 	respond @git 404
+
+	# X-Wiki-User is only ever what Cloudflare Access authenticated; a
+	# client-supplied value is dropped, then rewritten from the Cf header.
+	handle /mcp* {
+		reverse_proxy mcp:8081 {
+			header_up -X-Wiki-User
+			header_up X-Wiki-User {header.Cf-Access-Authenticated-User-Email}
+		}
+	}
 
 	handle /status {
 		root * /state

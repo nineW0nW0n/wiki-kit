@@ -1,7 +1,8 @@
 ---
-# wiki-kit deployment (HANDOFF §7/§8). The node provides bundles.yml next to
-# this file (or set BUNDLES_YML). cloudflared + mcp services land at step 9;
-# until then port 8080 is exposed for local/LAN access.
+# wiki-kit deployment (HANDOFF §7/§8/§9). The node provides bundles.yml next
+# to this file (or set BUNDLES_YML). Port 8080 stays exposed for local/LAN
+# use; in production run `--profile tunnel` and firewall the port off —
+# cloudflared is the way in. `--profile ci` adds the bundle-repo runner.
 services:
   builder:
     build: .
@@ -24,6 +25,40 @@ services:
       - bundles:/bundles:ro
       - site:/site:ro
       - state:/state:ro
+    restart: unless-stopped
+
+  mcp:
+    build: .
+    command: ["python3", "mcp/server.py"]
+    volumes:
+      - "${BUNDLES_YML:-./bundles.yml}:/etc/wiki/bundles.yml:ro"
+      - bundles:/bundles:ro
+      - state:/state:ro
+    restart: unless-stopped
+
+  cloudflared:
+    profiles: [tunnel]
+    image: cloudflare/cloudflared:2026.8.2
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: "${TUNNEL_TOKEN:?set in .env on the node}"
+    restart: unless-stopped
+
+  # Self-hosted runner for the private brain-* repos ONLY — never attach to
+  # the public wiki-kit repo (HANDOFF §3). Ephemeral: re-registers per job;
+  # RUNNER_TOKEN is a short-lived registration token
+  # (gh api -X POST repos/<owner>/<repo>/actions/runners/registration-token).
+  runner:
+    profiles: [ci]
+    image: ghcr.io/actions/actions-runner:2.336.0
+    command: >
+      sh -c './config.sh --url "$$REPO_URL" --token "$$RUNNER_TOKEN"
+      --labels wiki --unattended --ephemeral --replace && ./run.sh'
+    environment:
+      REPO_URL: "${REPO_URL:-}"
+      RUNNER_TOKEN: "${RUNNER_TOKEN:-}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
 volumes:

@@ -219,12 +219,18 @@ Tools: `search(query, bundle?)`, `get_page(bundle, path)`, `list_runbooks(bundle
 `who_knows(system)`, `trace_ticket(id)`, `stale()`. No write tool exists in the code.
 Repo mounts are read-only. Filters bundles by caller's groups.
 
-**VERIFY at step 9:** how Cloudflare Access exposes group membership to a backend
-(JWT claim vs. identity endpoint). Until confirmed, MCP filters on `X-Wiki-User`
-against an allowlist in `bundles.yml`.
+**VERIFIED (step 9, 2026-08-25):** Access puts IdP groups in the JWT `custom`
+claim only when explicitly configured as a custom OIDC claim/SAML attribute, and
+trims `custom` at ~1 KB (groups dropped first) — Cloudflare's own docs say not to
+authorize on it; the full identity needs a `/cdn-cgi/access/get-identity` call.
+Decision: keep the `X-Wiki-User` + `readers:` allowlist in `bundles.yml`.
 
-**VERIFY at step 9:** Cloudflare Access service token works for Claude Code against
-`/mcp`. Note: claude.ai remote-MCP connectors need OAuth; out of scope now.
+**VERIFIED (step 9, 2026-08-25):** service tokens work header-based
+(`CF-Access-Client-Id`/`CF-Access-Client-Secret` on every request) against a
+Service Auth policy; Claude Code MCP config supports custom headers. Caveat: a
+service-token request carries no user email, so `X-Wiki-User` is empty and only
+bundles without a `readers:` list are visible to it. claude.ai remote-MCP
+connectors need OAuth; out of scope now.
 
 ## 10. `template/` contents
 
