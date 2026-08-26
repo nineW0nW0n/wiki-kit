@@ -94,13 +94,31 @@ run_loop() {
         done < "$results"
         mv "$results.done" "$results"
 
-        python3 - "$results" "$STATE_DIR/status.json" <<'EOF'
-import json, sys, time
+        python3 - "$results" "$STATE_DIR/status.json" "$SITE_DIR/index.html" <<'EOF'
+import html, json, sys, time
 rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
-status = {"updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+updated = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+status = {"updated": updated,
           "bundles": {r[0]: {"sha": r[1], "lint_exit": int(r[2]), "build": r[3]}
                       for r in rows}}
 json.dump(status, open(sys.argv[2], "w"), indent=1)
+
+# root index: bare host lands here instead of a 404 (served by Caddy try_files)
+items = "\n".join(
+    '<li><a href="/{0}/">{0}</a> <small>({1})</small></li>'.format(
+        html.escape(r[0]), html.escape(r[3])) for r in rows)
+open(sys.argv[3], "w").write("""<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wiki</title>
+<style>body{{font:16px/1.5 system-ui;max-width:40rem;margin:2rem auto;padding:0 1rem}}
+small{{color:#888}}</style>
+<h1>wiki</h1>
+<ul>
+{items}
+</ul>
+<p><small>updated {updated}</small></p>
+""".format(items=items, updated=updated))
 EOF
         echo "cycle done; sleeping ${INTERVAL}s"
         sleep "$INTERVAL"
