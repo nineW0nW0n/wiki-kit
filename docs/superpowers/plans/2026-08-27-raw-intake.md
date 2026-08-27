@@ -885,17 +885,15 @@ def http(method: str, path: str, token: str, json=None):
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/test_intake_github.py -v`
-Expected: PASS, 9 tests
+Expected: PASS, 8 tests
 
-- [ ] **Step 5: VERIFY the real transport's import name**
+- [x] **Step 5: RESOLVED — the real transport's import name**
 
-`mcp==2.1.0` depends on `httpx2>=2.5.0`, and the module name that package installs has not been confirmed in this repo. Inside the built image, run:
-
-```bash
-docker run --rm wiki-kit:smoke python3 -c "import httpx2; print(httpx2.__version__)"
-```
-
-If that fails, run `docker run --rm wiki-kit:smoke python3 -c "import httpx; print(httpx.__version__)"` and change the single import line in `http()` to match. Do not add anything to `requirements.txt`: one of the two is already installed as a transitive dependency.
+`mcp==2.1.0` depends on `httpx2>=2.5.0`. Confirmed against the published wheel
+(`httpx2-2.5.0-py3-none-any.whl`): the package installs a single top-level module named
+`httpx2` and exports `request` from its `__init__`. So `import httpx2 as httpx` followed by
+`httpx.request(...)` is correct as written, and no image build is needed to check it. Nothing
+is added to `requirements.txt` — `httpx2` arrives as a transitive dependency of `mcp`.
 
 - [ ] **Step 6: Commit**
 
@@ -1263,7 +1261,7 @@ def handle_submit(*, form: config.Form, bundle: dict, bundle_id: str,
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/test_intake_handlers.py -v`
-Expected: PASS, 11 tests
+Expected: PASS, 12 tests
 
 - [ ] **Step 5: Write the ASGI shell**
 
