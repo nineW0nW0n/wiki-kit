@@ -12,10 +12,6 @@ BUNDLES_DIR="${BUNDLES_DIR:-/bundles}"
 SITE_DIR="${SITE_DIR:-/site}"
 STATE_DIR="${STATE_DIR:-/state}"
 
-cfg() {  # cfg <yaml-path-expr>  e.g. cfg "site_host"
-    python3 -c "import sys,yaml; print(yaml.safe_load(open('$BUNDLES_FILE')).get('$1',''))"
-}
-
 bundles_tsv() {  # id \t repo \t branch \t ticket_regex
     python3 - "$BUNDLES_FILE" <<'EOF'
 import sys, yaml
@@ -57,10 +53,16 @@ run_loop() {
     # single-purpose container: uid mismatches on mounted repos are fine
     git config --global --add safe.directory '*'
 
-    SITE_HOST="$(cfg site_host)"
+    # one parse for both globals; shlex.quote keeps values safe to eval
+    eval "$(python3 - "$BUNDLES_FILE" <<'EOF'
+import shlex, sys, yaml
+c = yaml.safe_load(open(sys.argv[1])) or {}
+print("SITE_HOST=" + shlex.quote(str(c.get("site_host", ""))))
+print("CFG_INTERVAL=" + shlex.quote(str(c.get("interval_seconds", "") or 900)))
+EOF
+)"
     export SITE_HOST BUNDLES_DIR SITE_DIR
-    INTERVAL="${INTERVAL:-$(cfg interval_seconds)}"
-    INTERVAL="${INTERVAL:-900}"
+    INTERVAL="${INTERVAL:-$CFG_INTERVAL}"
 
     while :; do
         results="$STATE_DIR/results.tsv"
