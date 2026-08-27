@@ -44,6 +44,8 @@ pytest tests/test_lint.py                           # lint rule tests against te
 docker build .                                      # then: docker run … lint template
 bash tests/smoke.sh
 docker compose up                                   # curl :8080/eng/ → HTML; :8080/eng/index.md → raw md
+python3 -m pytest tests/ -q                         # all tests, including intake
+docker run --rm -e INTAKE_DRY_RUN=1 wiki-kit intake # intake service, writes nothing
 ```
 
 ## Constraints to keep in mind while building

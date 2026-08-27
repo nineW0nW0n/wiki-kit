@@ -1,0 +1,21 @@
+---
+# Fields shown on the wiki's intake form for this bundle.
+# Adding a field here is a commit — no deploy, no node access. It appears on
+# the form within one builder cycle.
+#
+# type: text | textarea | select | date | checkbox
+# into: body (a ## section) | frontmatter (a key)
+# Reserved names, generated for you: type, kind, author, date,
+# classification, status. `ticket` is yours but must match the bundle regex.
+title: "Add to {{BUNDLE_ID}}"
+kind: [note, meeting, ticket]
+fields:
+  - name: what
+    label: "What happened, in your own words?"
+    type: textarea
+    required: true
+    into: body
+  - name: system
+    label: "Which system is this about? (optional)"
+    type: text
+    into: frontmatter

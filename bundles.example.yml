@@ -16,6 +16,8 @@ bundles:
     # carry no email). Group claims rejected — see HANDOFF §9 VERIFIED.
     readers: [alice@example.com]
     ticket_regex: '^(INC|CHG|PRB)\d{7}$'
+    # tier: classification stamped on notes filed through the intake form
+    tier: P1
   - id: support
     repo: https://github.com/<owner>/brain-support.git
     path: /support
