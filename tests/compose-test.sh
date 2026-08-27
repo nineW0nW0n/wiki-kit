@@ -75,10 +75,27 @@ code=$(curl -s -o /dev/null -w '%{http_code}' \
     http://localhost:8080/intake)
 [ "$code" = 403 ] || { echo "FAIL: /intake on :8080 returned $code, want 403"; exit 1; }
 
+echo "== intake served on the tunnel port"
 docker compose -f "$REPO/docker-compose.yml" -f "$SEED/override.yml" \
     exec -T web wget -qO- \
     --header="Cf-Access-Authenticated-User-Email: alice@test" \
     http://localhost:8090/intake | grep -q "Add to the wiki" || {
     echo "FAIL: /intake on :8090 did not render the bundle list"; exit 1; }
+
+# Pins the header rewrite itself: Access's email must reach the app as the
+# author, and a client-supplied X-Wiki-User must lose to it. Before this
+# assertion existed, a Caddyfile that deleted the header it had just written
+# passed every test we had.
+echo "== tunnel rewrites X-Wiki-User from Access and overrides a forged one"
+page=$(docker compose -f "$REPO/docker-compose.yml" -f "$SEED/override.yml" \
+    exec -T web wget -qO- \
+    --header="Cf-Access-Authenticated-User-Email: alice@test" \
+    --header="X-Wiki-User: mallory@evil.test" \
+    http://localhost:8090/intake/eng)
+echo "$page" | grep -q "human:alice" || {
+    echo "FAIL: /intake/eng did not render as the Access-authenticated user"; exit 1; }
+if echo "$page" | grep -q "mallory"; then
+    echo "FAIL: client-supplied X-Wiki-User reached the app"; exit 1
+fi
 
 echo "== compose-test: OK"
