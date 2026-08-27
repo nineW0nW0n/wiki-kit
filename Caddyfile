@@ -40,18 +40,21 @@
 	import wiki
 }
 
-# Tunnel-only: X-Wiki-User is only ever what Cloudflare Access
-# authenticated; any client-supplied value is dropped, then rewritten.
+# Tunnel-only: X-Wiki-User is only ever what Cloudflare Access authenticated.
+# request_header runs before reverse_proxy, so the client-supplied value is gone
+# before the rewrite. Do NOT fold that delete into a `header_up -X-Wiki-User`:
+# within one header_up group Caddy applies deletes AFTER sets, so the pair
+# deletes the value it just wrote and the upstream sees no user at all.
 :8090 {
 	handle /mcp* {
+		request_header -X-Wiki-User
 		reverse_proxy mcp:8081 {
-			header_up -X-Wiki-User
 			header_up X-Wiki-User {header.Cf-Access-Authenticated-User-Email}
 		}
 	}
 	handle /intake* {
+		request_header -X-Wiki-User
 		reverse_proxy intake:8082 {
-			header_up -X-Wiki-User
 			header_up X-Wiki-User {header.Cf-Access-Authenticated-User-Email}
 		}
 	}
