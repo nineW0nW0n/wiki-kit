@@ -65,7 +65,10 @@ async def index(request):
 
 def _load(bundle_id: str, user: str):
     cfg = bundles.load(BUNDLES_FILE)
-    if bundle_id not in bundles.allowed_ids(cfg, user):
+    # Same filter as index(): a configured-but-uncloned bundle is not offered,
+    # so a hand-typed URL must not reach the form either.
+    if (bundle_id not in bundles.allowed_ids(cfg, user)
+            or not (BUNDLES_DIR / bundle_id).is_dir()):
         return None, None
     return bundles.by_id(cfg, bundle_id), config.load(BUNDLES_DIR / bundle_id)
 

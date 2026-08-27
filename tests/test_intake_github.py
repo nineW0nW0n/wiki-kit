@@ -48,8 +48,10 @@ def test_happy_path_makes_four_calls_and_returns_the_pr_url():
 
 
 def test_existing_path_retries_with_a_suffix():
-    # PUT 422 means the path exists; the next PUT should carry -2.
-    fake = Fake([OK_REF, OK_CREATED, (422, {}), OK_CREATED, OK_PR])
+    # PUT 422 means the path exists; the branch it was for is abandoned and
+    # the retry moves both the branch and the path to -2.
+    fake = Fake([OK_REF, OK_CREATED, (422, {}), (204, {}), OK_CREATED,
+                 OK_CREATED, OK_PR])
     github.open_note_pr(
         request=fake, token="t", url="https://github.com/o/brain-eng.git",
         base="main", path="raw/notes/2026-08-27-x.md", content="hello",
@@ -57,10 +59,30 @@ def test_existing_path_retries_with_a_suffix():
     puts = [c[1] for c in fake.calls if c[0] == "PUT"]
     assert puts[0].endswith("2026-08-27-x.md")
     assert puts[1].endswith("2026-08-27-x-2.md")
+    refs = [c[2]["ref"] for c in fake.calls if c[0] == "POST" and "refs" in c[1]]
+    assert refs == ["refs/heads/intake/2026-08-27-x",
+                    "refs/heads/intake/2026-08-27-x-2"]
+
+
+def test_same_day_duplicate_title_succeeds_on_a_suffixed_branch():
+    # The common duplicate: the earlier note's branch is still open, so
+    # POST git/refs is what collides — not the contents PUT.
+    fake = Fake([OK_REF, (422, {"message": "Reference already exists"}),
+                 OK_CREATED, OK_CREATED, OK_PR])
+    pr = github.open_note_pr(
+        request=fake, token="t", url="https://github.com/o/brain-eng.git",
+        base="main", path="raw/notes/2026-08-27-x.md", content="hello",
+        title="x", body="b", day="2026-08-27", slug="x")
+    assert pr == "https://github.com/o/brain-eng/pull/7"
+    assert "DELETE" not in [c[0] for c in fake.calls]
+    assert fake.calls[2][2]["ref"] == "refs/heads/intake/2026-08-27-x-2"
+    assert fake.calls[3][1].endswith("2026-08-27-x-2.md")
+    assert fake.calls[3][2]["branch"] == "intake/2026-08-27-x-2"
+    assert fake.calls[-1][2]["head"] == "intake/2026-08-27-x-2"
 
 
 def test_gives_up_after_five_collisions():
-    fake = Fake([OK_REF, OK_CREATED] + [(422, {})] * 5 + [(204, {})])
+    fake = Fake([OK_REF] + [OK_CREATED, (422, {}), (204, {})] * 5)
     with pytest.raises(github.GitHubError) as e:
         github.open_note_pr(
             request=fake, token="t", url="https://github.com/o/brain-eng.git",

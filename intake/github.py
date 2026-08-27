@@ -4,7 +4,8 @@
 The transport is injected so tests never reach the network, and so the only
 credentialed call site in the service is `_http` below. A contents PUT without
 a `sha` fails with 422 when the path exists; that is the collision check, so
-no extra probe call is made.
+no extra probe call is made. The branch carries the same -2..-5 suffix as the
+path, because a same-day duplicate title collides on the branch first.
 """
 from __future__ import annotations
 
@@ -28,8 +29,9 @@ def owner_repo(url: str) -> tuple[str, str]:
     return m.group(1), m.group(2)
 
 
-def _suffixed(path: str, n: int) -> str:
-    return path[:-3] + f"-{n}.md" if n > 1 else path
+def _suffixed(stem: str, n: int, tail: str = "") -> str:
+    """n == 1 is the original; 2..5 append `-n` before the tail."""
+    return (stem if n == 1 else f"{stem}-{n}") + tail
 
 
 def open_note_pr(*, request, token: str, url: str, base: str, path: str,
@@ -37,33 +39,39 @@ def open_note_pr(*, request, token: str, url: str, base: str, path: str,
                  slug: str) -> str:
     owner, repo = owner_repo(url)
     api = f"repos/{owner}/{repo}"
-    branch = f"intake/{day}-{slug}"
 
     status, payload = request("GET", f"{api}/git/ref/heads/{base}", token, None)
     if status != 200:
         raise GitHubError(f"cannot read {base}: HTTP {status}", status)
     base_sha = payload["object"]["sha"]
 
-    status, _ = request("POST", f"{api}/git/refs", token,
-                        {"ref": f"refs/heads/{branch}", "sha": base_sha})
-    if status not in (200, 201):
-        raise GitHubError(f"cannot create branch {branch}: HTTP {status}", status)
-
     encoded = base64.b64encode(content.encode("utf-8")).decode("ascii")
-    written = None
+    # Branch and path carry the same suffix. A second note with the same title
+    # on the same day collides on the branch first (the earlier note's branch
+    # is still open), so the retry has to move both or it never fires.
+    branch = written = None
     for n in range(1, MAX_SUFFIX + 1):
-        candidate = _suffixed(path, n)
+        candidate_branch = _suffixed(f"intake/{day}-{slug}", n)
+        candidate = _suffixed(path[:-3], n, ".md")
+        status, _ = request("POST", f"{api}/git/refs", token,
+                            {"ref": f"refs/heads/{candidate_branch}",
+                             "sha": base_sha})
+        if status == 422:  # branch exists — same title, same day
+            continue
+        if status not in (200, 201):
+            raise GitHubError(
+                f"cannot create branch {candidate_branch}: HTTP {status}",
+                status)
         status, _ = request("PUT", f"{api}/contents/{candidate}", token,
                             {"message": f"raw: {title}", "content": encoded,
-                             "branch": branch})
+                             "branch": candidate_branch})
         if status in (200, 201):
-            written = candidate
+            branch, written = candidate_branch, candidate
             break
+        _delete_branch(request, token, api, candidate_branch)
         if status != 422:
-            _delete_branch(request, token, api, branch)
             raise GitHubError(f"cannot write {candidate}: HTTP {status}", status)
     if written is None:
-        _delete_branch(request, token, api, branch)
         raise GitHubError(f"{path} and {MAX_SUFFIX - 1} suffixed variants "
                           f"already exists; rename the note", 422)
 
