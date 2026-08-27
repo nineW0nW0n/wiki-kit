@@ -12,11 +12,15 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import sys
 from datetime import date
 from pathlib import Path
 
 import yaml
 from mcp.server.mcpserver import Context, MCPServer
+
+sys.path.insert(0, str(Path(os.environ.get("APP_DIR", "/app")) / "scripts"))
+import bundles  # noqa: E402  (shared bundles.yml reader)
 
 BUNDLES_FILE = Path(os.environ.get("BUNDLES_FILE", "/etc/wiki/bundles.yml"))
 BUNDLES_DIR = Path(os.environ.get("BUNDLES_DIR", "/bundles"))
@@ -32,14 +36,7 @@ def _user(ctx: Context) -> str:
 
 
 def _allowed(ctx: Context) -> list[str]:
-    user = _user(ctx)
-    cfg = yaml.safe_load(BUNDLES_FILE.read_text()) or {}
-    out = []
-    for b in cfg.get("bundles", []):
-        readers = b.get("readers")
-        if readers is None or user in readers:
-            out.append(str(b["id"]))
-    return out
+    return bundles.allowed_ids(bundles.load(BUNDLES_FILE), _user(ctx))
 
 
 def _frontmatter(path: Path) -> dict:

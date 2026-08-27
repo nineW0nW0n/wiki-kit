@@ -141,7 +141,7 @@ finish() {
 # Run this ON THE NODE, inside your deploy directory (a clone of wiki-kit).
 # ──────────────────────────────────────────────────────────────────────────
 
-TOTAL_STAGES=8
+TOTAL_STAGES=11
 
 banner "wiki-kit deployment"
 
@@ -221,6 +221,37 @@ note "Heads-up: service-token calls carry no user email, so MCP shows them"
 note "only bundles WITHOUT a readers: allowlist (HANDOFF §9)."
 
 # ── 7 ─────────────────────────────────────────────────────────────────────
+stage "Intake token (write-scoped, separate from the pull token)"
+say "The intake form opens PRs. That needs its own fine-grained PAT."
+open_url "https://github.com/settings/personal-access-tokens/new"
+step "Token name: wiki-kit-intake · Expiration: your call."
+step "Repository access: Only select repositories → every brain-* repo."
+step "NEVER include wiki-kit itself."
+step "Permissions → Repository → Contents: Read and write."
+step "Permissions → Repository → Pull requests: Read and write."
+step "Nothing else. Generate, then copy the token."
+ask_secret INTAKE_TOKEN "Paste the intake PAT:"
+write_env INTAKE_TOKEN "$INTAKE_TOKEN"
+
+# ── 8 ─────────────────────────────────────────────────────────────────────
+stage "Branch protection (this is what stops the token reaching main)"
+say "The intake token can push branches. Protection is what keeps it off main."
+step "For each of your brain-* repos, open Settings → Branches → Add rule."
+step "Branch name pattern: main"
+step "Tick: Require a pull request before merging."
+warn "Without this rule the intake token can write straight to main."
+pause "Protection enabled on every brain-* repo? Press Enter."
+
+# ── 9 ─────────────────────────────────────────────────────────────────────
+stage "Access policy for /intake"
+say "Reading the wiki and filing into it should be grantable separately."
+open_url "https://one.dash.cloudflare.com/"
+step "Access → Applications → Add an application → Self-hosted."
+step "Name: wiki-intake · Domain: $SITE_HOST · Path: intake"
+step "Policy 'filers': Action Allow · Include → the people who may file."
+pause "Application saved? Press Enter."
+
+# ── 10 ────────────────────────────────────────────────────────────────────
 stage "Start the stack"
 say "Bringing up builder, web, mcp, and cloudflared."
 docker compose --profile tunnel up -d --build
@@ -236,7 +267,7 @@ else
 fi
 pause "Press Enter to continue to verification."
 
-# ── 8 ─────────────────────────────────────────────────────────────────────
+# ── 11 ────────────────────────────────────────────────────────────────────
 stage "Verify: phone + Claude Code"
 step "On your phone (off wifi, on mobile data), open:"
 note "    https://$SITE_HOST/<bundle-id>/"
