@@ -29,8 +29,8 @@ jobs:
         run: pip install -r requirements.txt pytest==9.1.1
       - name: validate template
         run: python3 scripts/okf_validate.py template --strict
-      - name: lint tests
-        run: pytest tests/test_lint.py -q
+      - name: unit tests
+        run: pytest tests/ -q
 
   smoke:
     runs-on: ubuntu-latest
