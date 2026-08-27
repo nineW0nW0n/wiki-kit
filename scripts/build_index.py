@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import yaml  # noqa: E402
 
 import okf_validate as okf  # noqa: E402
+from lint import load_meta  # noqa: E402  (same frontmatter parse as the linter)
 
 SPOF_HEADING = "## Single Point of Failure"
 
@@ -33,20 +34,6 @@ def md_files(bundle: Path):
     for p in sorted(bundle.rglob("*.md")):
         if p.is_file() and ".git" not in p.parts:
             yield p
-
-
-def load_meta(path: Path) -> tuple[dict, str]:
-    try:
-        raw, body = okf.split_frontmatter(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError):
-        return {}, ""
-    if raw is None:
-        return {}, body
-    try:
-        meta = yaml.safe_load(raw)
-    except yaml.YAMLError:
-        return {}, body
-    return (meta if isinstance(meta, dict) else {}), body
 
 
 def build_db(root: Path, ids: list[str], db_path: Path) -> int:
