@@ -50,6 +50,23 @@ def test_user_values_are_escaped_not_injected():
     assert "&lt;script&gt;" in html
 
 
+def test_user_values_cannot_break_out_of_an_attribute():
+    payload = '" onmouseover=alert(1) x="'
+    html = render(values={"title": payload})
+    assert '" onmouseover=alert(1)' not in html
+    assert "&quot; onmouseover=alert(1)" in html
+
+
+def test_field_name_from_intake_yml_is_escaped_in_attributes():
+    form = config.Form(title="t", kinds=["note"], fields=[
+        config.Field(name='x" autofocus onfocus=alert(1)', label="X",
+                     type="text", required=False, into="body"),
+    ])
+    html = render(form=form)
+    assert 'x" autofocus' not in html
+    assert "x&quot; autofocus" in html
+
+
 def test_required_field_missing_is_refused_before_any_api_call():
     calls = []
     result = handlers.handle_submit(
@@ -78,7 +95,7 @@ def test_bad_ticket_is_refused_before_any_api_call():
         day="2026-08-27", dry_run=False,
         request=lambda *a, **k: calls.append(a) or (200, {}), token="t")
     assert result.ok is False
-    assert "INC" in result.html
+    assert "does not match" in result.html
     assert calls == []
 
 

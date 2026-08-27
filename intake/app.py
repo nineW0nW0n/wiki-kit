@@ -9,6 +9,7 @@ records that service tokens carry no email.
 from __future__ import annotations
 
 import datetime
+import html
 import os
 import sys
 from pathlib import Path
@@ -42,7 +43,8 @@ def _today() -> str:
 
 
 def _forbidden(message: str) -> HTMLResponse:
-    return HTMLResponse(f"<h1>Not allowed</h1><p>{message}</p>", status_code=403)
+    return HTMLResponse(f"<h1>Not allowed</h1><p>{html.escape(message)}</p>",
+                        status_code=403)
 
 
 async def index(request):
@@ -56,7 +58,8 @@ async def index(request):
     if not ids:
         return HTMLResponse("<h1>Nothing to file into</h1><p>Your account has "
                             "no bundle it may write to. Ask the wiki owner.</p>")
-    links = "".join(f"<li><a href='/intake/{b}'>{b}</a></li>" for b in ids)
+    links = "".join(f"<li><a href='/intake/{html.escape(b)}'>{html.escape(b)}</a></li>"
+                    for b in ids)
     return HTMLResponse(f"<h1>Add to the wiki</h1><ul>{links}</ul>")
 
 
@@ -75,9 +78,10 @@ async def form(request):
     try:
         bundle, form_cfg = _load(bundle_id, user)
     except config.ConfigError as exc:
-        return HTMLResponse(f"<h1>{bundle_id} cannot accept submissions</h1>"
-                            f"<p>Its intake.yml is invalid: {exc}</p>",
-                            status_code=500)
+        return HTMLResponse(
+            f"<h1>{html.escape(bundle_id)} cannot accept submissions</h1>"
+            f"<p>Its intake.yml is invalid: {html.escape(str(exc))}</p>",
+            status_code=500)
     if bundle is None:
         return _forbidden(f"No bundle {bundle_id!r} you may write to.")
     return HTMLResponse(handlers.render_form(
@@ -86,18 +90,35 @@ async def form(request):
         ticket_regex=bundle.get("ticket_regex"), day=_today()))
 
 
+def _same_origin_post(request) -> bool:
+    """True only for a same-origin POST.
+
+    Sec-Fetch-Site is sent by every modern browser; treat it as unknown
+    (not same-origin) when absent, per the spec's required Origin fallback,
+    rather than defaulting to the unsafe "same-origin" assumption.
+    """
+    site = request.headers.get("sec-fetch-site")
+    if site is not None:
+        return site in ("same-origin", "none")
+    origin = request.headers.get("origin")
+    if not origin:
+        return False
+    return origin.rsplit("://", 1)[-1] == request.headers.get("host", "")
+
+
 async def submit(request):
     user = _user(request)
     if not user:
         return _forbidden("This form needs a signed-in person.")
-    if request.headers.get("sec-fetch-site", "same-origin") != "same-origin":
+    if not _same_origin_post(request):
         return _forbidden("Cross-site submissions are refused.")
     bundle_id = request.path_params["bundle"]
     try:
         bundle, form_cfg = _load(bundle_id, user)
     except config.ConfigError as exc:
-        return HTMLResponse(f"<h1>Invalid intake.yml</h1><p>{exc}</p>",
-                            status_code=500)
+        return HTMLResponse(
+            f"<h1>Invalid intake.yml</h1><p>{html.escape(str(exc))}</p>",
+            status_code=500)
     if bundle is None:
         return _forbidden(f"No bundle {bundle_id!r} you may write to.")
     values = {k: str(v) for k, v in (await request.form()).items()}

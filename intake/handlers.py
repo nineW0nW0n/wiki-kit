@@ -61,21 +61,22 @@ def _notice(bundle_id: str, kind: str, user: str, classification: str,
 
 def _input(f: config.Field, value: str) -> str:
     v = html.escape(value or "")
+    n = html.escape(f.name)
     req = " required" if f.required else ""
-    label = f"<label for={f.name}>{html.escape(f.label)}</label>"
+    label = f"<label for=\"{n}\">{html.escape(f.label)}</label>"
     if f.type == "textarea":
-        return f"{label}<textarea id={f.name} name={f.name}{req}>{v}</textarea>"
+        return f"{label}<textarea id=\"{n}\" name=\"{n}\"{req}>{v}</textarea>"
     if f.type == "select":
         opts = "".join(
             f"<option{' selected' if o == value else ''}>{html.escape(o)}</option>"
             for o in f.options)
-        return f"{label}<select id={f.name} name={f.name}{req}>{opts}</select>"
+        return f"{label}<select id=\"{n}\" name=\"{n}\"{req}>{opts}</select>"
     if f.type == "checkbox":
         checked = " checked" if value else ""
-        return (f"{label}<input type=checkbox id={f.name} name={f.name}"
+        return (f"{label}<input type=checkbox id=\"{n}\" name=\"{n}\""
                 f"{checked}>")
     itype = "date" if f.type == "date" else "text"
-    return (f"{label}<input type={itype} id={f.name} name={f.name} "
+    return (f"{label}<input type={itype} id=\"{n}\" name=\"{n}\" "
             f"value=\"{v}\"{req}>")
 
 
