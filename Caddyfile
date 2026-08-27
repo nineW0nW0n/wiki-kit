@@ -34,6 +34,9 @@
 	handle /mcp* {
 		respond "MCP is served through the tunnel only" 403
 	}
+	handle /intake* {
+		respond "The intake form is served through the tunnel only" 403
+	}
 	import wiki
 }
 
@@ -42,6 +45,12 @@
 :8090 {
 	handle /mcp* {
 		reverse_proxy mcp:8081 {
+			header_up -X-Wiki-User
+			header_up X-Wiki-User {header.Cf-Access-Authenticated-User-Email}
+		}
+	}
+	handle /intake* {
+		reverse_proxy intake:8082 {
 			header_up -X-Wiki-User
 			header_up X-Wiki-User {header.Cf-Access-Authenticated-User-Email}
 		}

@@ -36,6 +36,17 @@ services:
       - state:/state:ro
     restart: unless-stopped
 
+  intake:
+    build: .
+    command: ["intake"]
+    environment:
+      INTAKE_TOKEN: "${INTAKE_TOKEN:-}"
+      INTAKE_DRY_RUN: "${INTAKE_DRY_RUN:-1}"
+    volumes:
+      - "${BUNDLES_YML:-./bundles.yml}:/etc/wiki/bundles.yml:ro"
+      - bundles:/bundles:ro
+    restart: unless-stopped
+
   cloudflared:
     profiles: [tunnel]
     image: cloudflare/cloudflared:2026.8.2

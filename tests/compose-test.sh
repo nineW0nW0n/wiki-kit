@@ -69,4 +69,14 @@ code=$(curl -s -o /dev/null -w '%{http_code}' \
     http://localhost:8080/mcp/)
 [ "$code" = 403 ] || { echo "FAIL: /mcp on :8080 returned $code, want 403"; exit 1; }
 
+echo "== intake refused on the published port, served on the tunnel port"
+code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/intake)
+[ "$code" = 403 ] || { echo "FAIL: /intake on :8080 returned $code, want 403"; exit 1; }
+
+docker compose -f "$REPO/docker-compose.yml" -f "$SEED/override.yml" \
+    exec -T web wget -qO- \
+    --header="Cf-Access-Authenticated-User-Email: alice@test" \
+    http://localhost:8090/intake | grep -q "Add to the wiki" || {
+    echo "FAIL: /intake on :8090 did not render the bundle list"; exit 1; }
+
 echo "== compose-test: OK"

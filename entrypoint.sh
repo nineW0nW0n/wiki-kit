@@ -3,6 +3,7 @@
 #   lint <bundle> [args...]      run scripts/lint.py
 #   validate <bundle> [args...]  run vendored okf_validate.py
 #   loop | <none>                builder loop (HANDOFF §7)
+#   intake                       intake web form (HANDOFF §8)
 #   <anything else>              exec verbatim (shell, python3, ...)
 set -eu
 
@@ -96,11 +97,22 @@ EOF
         done < "$results"
         mv "$results.done" "$results"
 
-        python3 - "$results" "$STATE_DIR/status.json" "$SITE_DIR/index.html" <<'EOF'
+        intake_health=$(python3 -c "
+import json, urllib.request
+try:
+    with urllib.request.urlopen('http://intake:8082/health', timeout=5) as r:
+        print(json.load(r).get('intake', 'unknown'))
+except Exception:
+    print('unreachable')
+" 2>/dev/null || echo unreachable)
+
+        python3 - "$results" "$STATE_DIR/status.json" "$SITE_DIR/index.html" \
+                 "$intake_health" <<'EOF'
 import html, json, sys, time
 rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
 updated = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 status = {"updated": updated,
+          "intake": sys.argv[4],
           "bundles": {r[0]: {"sha": r[1], "lint_exit": int(r[2]), "build": r[3]}
                       for r in rows}}
 json.dump(status, open(sys.argv[2], "w"), indent=1)
@@ -134,5 +146,6 @@ case "$cmd" in
     lint)     exec python3 "$APP/scripts/lint.py" "$@" ;;
     validate) exec python3 "$APP/scripts/okf_validate.py" "$@" ;;
     loop)     run_loop ;;
+    intake)   exec python3 "$APP/intake/app.py" ;;
     *)        exec "$cmd" "$@" ;;
 esac
