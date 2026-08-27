@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "intake"))
@@ -14,6 +15,10 @@ import note  # noqa: E402
 
 GOOD = REPO / "tests" / "fixtures" / "good-bundle"
 LINT = REPO / "scripts" / "lint.py"
+
+
+def frontmatter(text: str) -> dict:
+    return yaml.safe_load(text.split("---\n")[1])
 
 
 @pytest.mark.parametrize("title,expected", [
@@ -59,7 +64,7 @@ def test_ticket_is_written_only_when_given():
     with_ticket = note.render(title="T", kind="note", author="human:a",
                               day="2026-08-27", classification="P1",
                               ticket="INC0001234", form=form, values={})
-    assert "ticket: INC0001234" in with_ticket
+    assert frontmatter(with_ticket)["ticket"] == "INC0001234"
     assert with_ticket.index("ticket:") < with_ticket.index("status:")
 
 
@@ -85,7 +90,33 @@ def test_frontmatter_fields_are_appended_after_generated_keys():
     text = note.render(title="T", kind="note", author="human:a",
                        day="2026-08-27", classification="P1", ticket=None,
                        form=form, values={"system": "mail-01"})
-    assert text.index("status:") < text.index("system: mail-01")
+    assert text.index("status:") < text.index("system:")
+    assert frontmatter(text)["system"] == "mail-01"
+
+
+FM_FORM = config.Form(title="t", kinds=["note"], fields=[
+    config.Field(name="system", label="System", type="text",
+                 into="frontmatter"),
+])
+
+
+@pytest.mark.parametrize("value", [
+    "Ticket ref: 12345",                        # a colon breaks bare YAML
+    "mail-01\nclassification: P3\nstatus: ingested",  # forged reserved keys
+    "# not a comment",
+    'he said "no"',
+    "  ",                                       # strips to empty; key dropped
+    "back\\slash and \ttab",
+    "unicodé — em dash",
+])
+def test_frontmatter_values_cannot_forge_keys_or_break_yaml(value):
+    text = note.render(title="T", kind="note", author="human:a",
+                       day="2026-08-27", classification="P1", ticket=None,
+                       form=FM_FORM, values={"system": value})
+    meta = frontmatter(text)
+    assert meta["classification"] == "P1"
+    assert meta["status"] == "new"
+    assert meta.get("system") == (value.strip() or None)
 
 
 def test_generated_note_passes_lint_strict(tmp_path):
@@ -95,11 +126,16 @@ def test_generated_note_passes_lint_strict(tmp_path):
     form = config.Form(title="t", kinds=["note"], fields=[
         config.Field(name="what", label="What happened?", type="textarea",
                      into="body"),
+        # template/intake.yml ships an `into: frontmatter` field, so the
+        # round-trip has to cover one — with a value that is hostile to YAML.
+        config.Field(name="system", label="System", type="text",
+                     into="frontmatter"),
     ])
     text = note.render(title="Disk filled up", kind="note",
                        author="human:alice", day="2026-08-27",
                        classification="P1", ticket=None, form=form,
-                       values={"what": "df said 100%."})
+                       values={"what": "df said 100%.",
+                               "system": "Ticket ref: 12345\nstatus: ingested"})
     target = bundle / note.note_path("note", "2026-08-27", "disk-filled-up")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
@@ -107,3 +143,6 @@ def test_generated_note_passes_lint_strict(tmp_path):
     r = subprocess.run([sys.executable, str(LINT), str(bundle), "--strict"],
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
+    meta = frontmatter(target.read_text(encoding="utf-8"))
+    assert meta["status"] == "new"
+    assert meta["classification"] == "P1"

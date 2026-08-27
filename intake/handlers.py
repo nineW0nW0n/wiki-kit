@@ -145,8 +145,12 @@ def handle_submit(*, form: config.Form, bundle: dict, bundle_id: str,
         return reject(f"{kind!r} is not an allowed kind for this bundle.")
 
     for f in form.fields:
-        if f.required and not (values.get(f.name) or "").strip():
+        value = (values.get(f.name) or "").strip()
+        if f.required and not value:
             return reject(f"{f.label} is required.")
+        # A POST need not come from the rendered <select>; pin it to the list.
+        if f.type == "select" and value and value not in f.options:
+            return reject(f"{value!r} is not an allowed value for {f.label}.")
 
     ticket = (values.get("ticket") or "").strip() or None
     if ticket and ticket_regex and not re.fullmatch(ticket_regex, ticket):
@@ -174,8 +178,12 @@ def handle_submit(*, form: config.Form, bundle: dict, bundle_id: str,
             base=bundle.get("branch", "main"), path=path, content=text,
             title=title, body=f"Filed from the wiki intake form by {user}.",
             day=day, slug=slug)
-    except github.GitHubError as exc:
-        return reject(f"Could not file this right now: {exc}. "
+    except Exception as exc:
+        # Timeouts, DNS/TLS errors and unexpected response bodies all land
+        # here: a 500 would throw away what the person just typed.
+        detail = (str(exc) if isinstance(exc, github.GitHubError)
+                  else type(exc).__name__)
+        return reject(f"Could not file this right now: {detail}. "
                       "Your text is still here — try again in a minute.")
 
     done = (f"<h1>Filed</h1><p>Opened <a href='{html.escape(pr_url)}'>"

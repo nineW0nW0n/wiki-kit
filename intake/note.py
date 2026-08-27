@@ -5,9 +5,14 @@ Shape is fixed by template/raw/CLAUDE.md: no `title` key (the title is the
 H1), `kind` selects the directory, and the key order below is the documented
 one. Filenames are YYYY-MM-DD-<slug>.md; anything else is a lint error the
 human would have to fix, which is the whole point of generating it here.
+
+Every user-supplied scalar is emitted with json.dumps: a JSON string literal
+is a valid YAML double-quoted scalar, so a value containing `: `, a newline,
+a leading `#` or a quote stays one string and cannot forge a second key.
 """
 from __future__ import annotations
 
+import json
 import re
 
 from config import Form
@@ -37,12 +42,12 @@ def render(*, title: str, kind: str, author: str, day: str,
     lines = ["---", "type: Source", f"kind: {kind}", f"author: {author}",
              f"date: {day}", f"classification: {classification}"]
     if ticket:
-        lines.append(f"ticket: {ticket}")
+        lines.append(f"ticket: {json.dumps(ticket)}")
     lines.append("status: new")
     for f in form.fields:
         value = (values.get(f.name) or "").strip()
         if f.into == "frontmatter" and value:
-            lines.append(f"{f.name}: {value}")
+            lines.append(f"{f.name}: {json.dumps(value)}")
     lines += ["---", "", f"# {title}", ""]
     for f in form.fields:
         value = (values.get(f.name) or "").strip()

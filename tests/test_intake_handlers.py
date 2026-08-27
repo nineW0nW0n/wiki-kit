@@ -145,6 +145,52 @@ def test_successful_submit_returns_the_pr_url():
     assert result.pr_url == "https://github.com/o/brain-eng/pull/3"
 
 
+def test_select_value_outside_its_options_is_refused_before_any_api_call():
+    calls = []
+    form = config.Form(title="t", kinds=["note"], fields=[
+        config.Field(name="system", label="System", type="select",
+                     required=True, into="frontmatter",
+                     options=["mail-01", "db-01"]),
+    ])
+    result = handlers.handle_submit(
+        form=form, bundle=BUNDLE, bundle_id="eng", user="alice@corp.com",
+        values={"title": "T", "kind": "note",
+                "system": "mail-01\nclassification: P3"},
+        day="2026-08-27", dry_run=False,
+        request=lambda *a, **k: calls.append(a) or (200, {}), token="t")
+    assert result.ok is False
+    assert "not an allowed value" in result.html
+    assert calls == []
+
+
+def test_transport_exception_keeps_the_typed_values_in_the_form():
+    """A timeout or a malformed body must not become a 500 that eats the note."""
+    def request(method, path, token, json=None):
+        raise TimeoutError("connect timed out")
+
+    result = handlers.handle_submit(
+        form=FORM, bundle=BUNDLE, bundle_id="eng", user="alice@corp.com",
+        values={"title": "Disk filled", "kind": "note",
+                "what": "a long incident write-up"},
+        day="2026-08-27", dry_run=False, request=request, token="t")
+    assert result.ok is False
+    assert "a long incident write-up" in result.html
+    assert "TimeoutError" in result.html
+    assert "connect timed out" not in result.html
+
+
+def test_unexpected_response_body_is_caught_not_raised():
+    def request(method, path, token, json=None):
+        return (200, {})  # no ["object"]["sha"]
+
+    result = handlers.handle_submit(
+        form=FORM, bundle=BUNDLE, bundle_id="eng", user="alice@corp.com",
+        values={"title": "Disk filled", "kind": "note", "what": "df"},
+        day="2026-08-27", dry_run=False, request=request, token="t")
+    assert result.ok is False
+    assert "KeyError" in result.html
+
+
 def test_api_failure_keeps_the_typed_values_in_the_form():
     def request(method, path, token, json=None):
         return (500, {})
