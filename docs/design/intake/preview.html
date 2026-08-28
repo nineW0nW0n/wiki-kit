@@ -1,0 +1,327 @@
+<!doctype html>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Intake form — styling proposal</title>
+
+<!--
+  Styling proposal for the intake form. Reference only: never served, never
+  linked from the app. Markup below mirrors what intake/handlers.py and
+  intake/app.py emit; the copy is verbatim.
+
+  Everything between BEGIN/END PRODUCTION CSS is what would replace the CSS
+  constant in intake/handlers.py. The .mock rules after it are scaffolding for
+  this page only and do not ship.
+-->
+
+<style>
+/* ---- BEGIN PRODUCTION CSS ---- */
+:root{
+  color-scheme:light dark;
+  --bg:#fbfbfa; --surface:#fff; --sunken:#f4f4f2;
+  --text:#1c1c1a; --muted:#63635e; --line:#e2e2dd; --line-strong:#c9c9c2;
+  --accent:#3d5a3d; --accent-text:#fff; --accent-weak:#eef2ee;
+  --danger:#a02020; --danger-weak:#fbeeee;
+  --ok:#2c5c3a; --ok-weak:#eef4ef;
+  --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s5:1.5rem; --s6:2rem;
+  --radius:6px;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#141416; --surface:#1b1b1e; --sunken:#232327;
+    --text:#e8e8e4; --muted:#a0a09a; --line:#2e2e33; --line-strong:#43434a;
+    --accent:#9dc49d; --accent-text:#14170f; --accent-weak:#1f2620;
+    --danger:#f08a8a; --danger-weak:#2a1a1a;
+    --ok:#8fc9a4; --ok-weak:#18231c;
+  }
+}
+*{box-sizing:border-box}
+body{
+  margin:0; padding:var(--s5) var(--s4) var(--s6);
+  font:16px/1.6 var(--sans); color:var(--text); background:var(--bg);
+  -webkit-text-size-adjust:100%;
+}
+main{max-width:44rem; margin:0 auto}
+h1{font-size:1.5rem; line-height:1.25; margin:0 0 var(--s2); letter-spacing:-.01em}
+h2{font-size:1rem; margin:var(--s5) 0 var(--s2)}
+p{margin:0 0 var(--s4)}
+a{color:inherit; text-underline-offset:3px}
+.lede{color:var(--muted); margin-bottom:var(--s5)}
+.lede strong{color:var(--text)}
+
+/* The receipt: what will be committed, and what we filled in. */
+.receipt{
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--surface); margin:0 0 var(--s5); overflow:hidden;
+}
+.receipt-head{
+  display:flex; flex-wrap:wrap; gap:var(--s1) var(--s3); align-items:baseline;
+  padding:var(--s3) var(--s4); border-bottom:1px solid var(--line);
+  background:var(--sunken);
+}
+.receipt-head b{font-size:.8rem; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--muted); font-weight:600}
+.receipt-head code{font:.85rem/1.5 var(--mono); word-break:break-all}
+.receipt-body{
+  display:grid; grid-template-columns:max-content 1fr;
+  gap:var(--s1) var(--s4); padding:var(--s4); margin:0;
+  font:.85rem/1.6 var(--mono);
+}
+.receipt-body dt{color:var(--muted)}
+.receipt-body dd{margin:0; word-break:break-word}
+.receipt-note{
+  padding:var(--s3) var(--s4); border-top:1px solid var(--line);
+  font-size:.8rem; color:var(--muted);
+}
+.receipt-note code{font-family:var(--mono)}
+
+/* Form */
+form{margin:0}
+label{display:block; margin:var(--s5) 0 var(--s2); font-weight:600; line-height:1.4}
+label .opt{font-weight:400; color:var(--muted)}
+input[type=text],input[type=date],textarea,select{
+  width:100%; padding:.55rem .7rem; font:inherit; color:var(--text);
+  background:var(--surface); border:1px solid var(--line-strong);
+  border-radius:var(--radius); appearance:none;
+}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
+  linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;
+  background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:2.2rem}
+textarea{min-height:11rem; resize:vertical; line-height:1.6}
+input[type=checkbox]{width:1.1rem; height:1.1rem; accent-color:var(--accent)}
+:is(input,textarea,select,button,a):focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px;
+}
+:is(input,textarea,select):hover{border-color:var(--muted)}
+.hint{margin:var(--s1) 0 0; font-size:.85rem; color:var(--muted)}
+button{
+  margin-top:var(--s6); padding:.6rem 1.5rem; font:inherit; font-weight:600;
+  color:var(--accent-text); background:var(--accent);
+  border:1px solid transparent; border-radius:var(--radius); cursor:pointer;
+}
+button:hover{filter:brightness(1.08)}
+
+/* States */
+.alert{
+  display:flex; gap:var(--s3); padding:var(--s3) var(--s4);
+  border:1px solid var(--line); border-left:4px solid var(--muted);
+  border-radius:var(--radius); background:var(--surface); margin:0 0 var(--s5);
+}
+.alert svg{flex:none; width:1.15rem; height:1.15rem; margin-top:.2rem}
+.alert p{margin:0}
+.alert p+p{margin-top:var(--s1); color:var(--muted); font-size:.9rem}
+.alert-error{border-left-color:var(--danger); background:var(--danger-weak)}
+.alert-error strong{color:var(--danger)}
+.alert-ok{border-left-color:var(--ok); background:var(--ok-weak)}
+.alert-info{border-left-color:var(--line-strong); background:var(--sunken)}
+
+pre{
+  margin:0 0 var(--s5); padding:var(--s4); overflow-x:auto;
+  font:.85rem/1.6 var(--mono); background:var(--sunken);
+  border:1px solid var(--line); border-radius:var(--radius);
+}
+.bundles{list-style:none; margin:0; padding:0}
+.bundles li+li{margin-top:var(--s2)}
+.bundles a{
+  display:flex; justify-content:space-between; gap:var(--s3); align-items:center;
+  padding:var(--s3) var(--s4); text-decoration:none;
+  border:1px solid var(--line); border-radius:var(--radius); background:var(--surface);
+}
+.bundles a:hover{border-color:var(--accent); background:var(--accent-weak)}
+.bundles span{color:var(--muted); font-size:.85rem}
+.prlink{word-break:break-all; font-family:var(--mono); font-size:.9rem}
+
+@media (max-width:30rem){
+  .receipt-body{grid-template-columns:1fr; gap:0}
+  .receipt-body dt{margin-top:var(--s2)}
+  button{width:100%}
+}
+/* ---- END PRODUCTION CSS ---- */
+
+/* Mockup scaffolding only — not shipped. */
+.mock{max-width:44rem;margin:0 auto var(--s6)}
+.mock-label{font:600 .75rem/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin:var(--s6) 0 var(--s2);padding-top:var(--s5);
+  border-top:1px dashed var(--line-strong)}
+.mock-note{font-size:.85rem;color:var(--muted);margin:0 0 var(--s4)}
+.frame{border:1px solid var(--line);border-radius:10px;padding:var(--s5);
+  background:var(--bg)}
+.frame.narrow{max-width:390px}
+</style>
+
+<main>
+
+<p class=mock-label>1 · The form</p>
+<p class=mock-note>The receipt is now a receipt. Same generated values, same order, no debug block.</p>
+<div class=frame>
+  <h1>Add to work</h1>
+  <p class=lede>Filing into <strong>work</strong> as human:abcollado.28</p>
+
+  <div class=receipt>
+    <div class=receipt-head>
+      <b>Will be committed as</b>
+      <code>raw/notes/2026-08-28-&lt;slug&gt;.md</code>
+    </div>
+    <dl class=receipt-body>
+      <dt>type</dt><dd>Source</dd>
+      <dt>kind</dt><dd>note</dd>
+      <dt>author</dt><dd>human:abcollado.28</dd>
+      <dt>date</dt><dd>2026-08-28</dd>
+      <dt>classification</dt><dd>P1</dd>
+      <dt>status</dt><dd>new</dd>
+    </dl>
+    <p class=receipt-note>Filled in for you. <code>&lt;slug&gt;</code> comes from the title.</p>
+  </div>
+
+  <form method=post action="/intake/work">
+    <label for=title>Title</label>
+    <input type=text id=title name=title required value="">
+
+    <label for=kind>Kind</label>
+    <select id=kind name=kind><option selected>note</option><option>meeting</option><option>ticket</option></select>
+
+    <label for=ticket>Ticket <span class=opt>(optional)</span></label>
+    <input type=text id=ticket name=ticket value="">
+    <p class=hint>Must match <code>^(OPS|INC)-\d+$</code></p>
+
+    <label for=what>What happened, in your own words?</label>
+    <textarea id=what name=what required></textarea>
+
+    <label for=system>Which system is this about? <span class=opt>(optional)</span></label>
+    <input type=text id=system name=system value="">
+
+    <button type=submit>Submit</button>
+  </form>
+</div>
+
+<p class=mock-label>2 · The form, rejected</p>
+<p class=mock-note>role=alert, focused on render. The second line is the whole point: their text survived.</p>
+<div class=frame>
+  <h1>Add to work</h1>
+  <p class=lede>Filing into <strong>work</strong> as human:abcollado.28</p>
+  <div class="alert alert-error" role=alert tabindex=-1>
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden=true><path d="M10 1.5 19 18H1L10 1.5Zm0 5.5v6m0 2.2v.3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+    <div>
+      <p><strong>Ticket 'FOO-1' does not match ^(OPS|INC)-\d+$.</strong></p>
+      <p>Nothing was filed. Everything you typed is still below.</p>
+    </div>
+  </div>
+  <form method=post action="/intake/work">
+    <label for=title2>Title</label>
+    <input type=text id=title2 name=title required value="Mail server fell over">
+    <label for=ticket2>Ticket <span class=opt>(optional)</span></label>
+    <input type=text id=ticket2 name=ticket value="FOO-1">
+    <label for=what2>What happened, in your own words?</label>
+    <textarea id=what2 name=what required>Postfix stopped accepting connections at about 09:15. Restarting it cleared the symptom but the disk was at 100% and that is the actual cause.</textarea>
+    <button type=submit>Submit</button>
+  </form>
+</div>
+
+<p class=mock-label>3 · The form, minimum</p>
+<p class=mock-note>A bundle with no intake.yml: one title, one textarea, kind hidden.</p>
+<div class=frame>
+  <h1>Drop a note</h1>
+  <p class=lede>Filing into <strong>eng</strong> as human:abcollado.28</p>
+  <div class=receipt>
+    <div class=receipt-head><b>Will be committed as</b><code>raw/notes/2026-08-28-&lt;slug&gt;.md</code></div>
+    <dl class=receipt-body>
+      <dt>type</dt><dd>Source</dd><dt>kind</dt><dd>note</dd>
+      <dt>author</dt><dd>human:abcollado.28</dd><dt>date</dt><dd>2026-08-28</dd>
+      <dt>classification</dt><dd>P2</dd><dt>status</dt><dd>new</dd>
+    </dl>
+  </div>
+  <form method=post action="/intake/eng">
+    <label for=title3>Title</label>
+    <input type=text id=title3 name=title required value="">
+    <label for=body3>Anything you want to record</label>
+    <textarea id=body3 name=body required></textarea>
+    <button type=submit>Submit</button>
+  </form>
+</div>
+
+<p class=mock-label>5 · Bundle picker</p>
+<p class=mock-note>Heading string is grepped by compose-test.sh — unchanged.</p>
+<div class=frame>
+  <h1>Add to the wiki</h1>
+  <p class=lede>Signed in as human:abcollado.28. Pick where this note belongs.</p>
+  <ul class=bundles>
+    <li><a href="/intake/work">work <span>P1</span></a></li>
+    <li><a href="/intake/eng">eng <span>P2</span></a></li>
+  </ul>
+</div>
+
+<p class=mock-label>6 · Dry-run preview</p>
+<div class=frame>
+  <h1>Preview</h1>
+  <div class="alert alert-info">
+    <svg viewBox="0 0 20 20" aria-hidden=true fill=none stroke=currentColor stroke-width=1.6><circle cx=10 cy=10 r=8.2/><path d="M10 9v5M10 6v.4" stroke-linecap=round/></svg>
+    <p>Nothing was filed — this service is in dry-run mode.</p>
+  </div>
+  <p class=lede><code>raw/notes/2026-08-28-mail-server-fell-over.md</code></p>
+  <pre>---
+type: Source
+kind: note
+author: human:abcollado.28
+date: 2026-08-28
+classification: P1
+status: new
+system: "mail-01"
+---
+
+# Mail server fell over
+
+## What happened, in your own words?
+
+Postfix stopped accepting connections at about 09:15. Restarting it cleared
+the symptom but the disk was at 100% and that is the actual cause.</pre>
+</div>
+
+<p class=mock-label>7 · Filed</p>
+<div class=frame>
+  <h1>Filed</h1>
+  <div class="alert alert-ok">
+    <svg viewBox="0 0 20 20" aria-hidden=true fill=none stroke=currentColor stroke-width=1.8><path d="M4 10.5 8 14.5 16 6" stroke-linecap=round stroke-linejoin=round/></svg>
+    <div>
+      <p>Opened <a class=prlink href="#">https://github.com/owner/brain-work/pull/42</a></p>
+      <p>It appears on the wiki once merged.</p>
+    </div>
+  </div>
+</div>
+
+<p class=mock-label>8 · The four dead ends</p>
+<div class=frame>
+  <h1>Nothing to file into</h1>
+  <p>Your account has no bundle it may write to. Ask the wiki owner.</p>
+  <h1 style="margin-top:2rem">Not allowed</h1>
+  <p>No bundle 'eng' you may write to.</p>
+  <h1 style="margin-top:2rem">Not allowed</h1>
+  <p>This form needs a signed-in person, not a service token.</p>
+  <h1 style="margin-top:2rem">work cannot accept submissions</h1>
+  <p>Its intake.yml is invalid:</p>
+  <pre>field 'date' collides with a reserved frontmatter key</pre>
+</div>
+
+<p class=mock-label>10 · Mobile, 390px</p>
+<div class="frame narrow">
+  <h1>Add to work</h1>
+  <p class=lede>Filing into <strong>work</strong> as human:abcollado.28</p>
+  <div class=receipt>
+    <div class=receipt-head><b>Will be committed as</b><code>raw/notes/2026-08-28-&lt;slug&gt;.md</code></div>
+    <dl class=receipt-body>
+      <dt>type</dt><dd>Source</dd><dt>kind</dt><dd>note</dd>
+      <dt>author</dt><dd>human:abcollado.28</dd><dt>date</dt><dd>2026-08-28</dd>
+      <dt>classification</dt><dd>P1</dd><dt>status</dt><dd>new</dd>
+    </dl>
+  </div>
+  <form method=post action="/intake/work">
+    <label for=title4>Title</label>
+    <input type=text id=title4 name=title required value="">
+    <label for=what4>What happened, in your own words?</label>
+    <textarea id=what4 name=what required></textarea>
+    <button type=submit>Submit</button>
+  </form>
+</div>
+
+</main>
