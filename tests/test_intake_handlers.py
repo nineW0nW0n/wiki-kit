@@ -26,22 +26,33 @@ def render(**kw):
     return handlers.render_form(**base)
 
 
-def test_notice_block_shows_the_real_frontmatter():
+def test_receipt_shows_the_real_frontmatter():
     html = render()
-    for line in ["type: Source", "kind: note", "author: human:alice",
-                 "classification: P1", "status: new"]:
-        assert line in html
+    for key, value in [("type", "Source"), ("kind", "note"),
+                       ("author", "human:alice"), ("classification", "P1"),
+                       ("status", "new")]:
+        assert f"<dt>{key}</dt><dd>{value}</dd>" in html
 
 
-def test_notice_block_lists_every_reserved_name():
+def test_receipt_accounts_for_every_reserved_name():
+    """RESERVED and the receipt must not drift: each generated key is shown."""
     html = render()
     for name in config.RESERVED:
-        assert name in html
+        assert f"<dt>{name}</dt>" in html
 
 
-def test_notice_block_shows_the_target_path_with_a_slug_placeholder():
+def test_receipt_does_not_lecture_the_submitter_about_intake_yml():
+    """Reserved-name guidance is for the bundle owner, not the person filing."""
+    assert "cannot be used as field names" not in render()
+
+
+def test_receipt_shows_the_target_path_with_a_slug_placeholder():
     assert "raw/notes/" in render()
     assert "&lt;slug&gt;" in render()
+
+
+def test_ticket_pattern_is_shown_beside_the_field_it_constrains():
+    assert "INC" in render().split("name=ticket", 1)[1].split("</p>", 1)[0]
 
 
 def test_user_values_are_escaped_not_injected():

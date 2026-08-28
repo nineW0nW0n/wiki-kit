@@ -26,6 +26,7 @@ import bundles  # noqa: E402
 import config  # noqa: E402
 import github  # noqa: E402
 import handlers  # noqa: E402
+import note  # noqa: E402
 
 BUNDLES_FILE = Path(os.environ.get("BUNDLES_FILE", "/etc/wiki/bundles.yml"))
 BUNDLES_DIR = Path(os.environ.get("BUNDLES_DIR", "/bundles"))
@@ -43,8 +44,17 @@ def _today() -> str:
 
 
 def _forbidden(message: str) -> HTMLResponse:
-    return HTMLResponse(f"<h1>Not allowed</h1><p>{html.escape(message)}</p>",
-                        status_code=403)
+    return HTMLResponse(handlers.page(
+        "Not allowed",
+        f"<h1>Not allowed</h1><p>{html.escape(message)}</p>"), status_code=403)
+
+
+def _bad_config(bundle_id: str, exc: Exception) -> HTMLResponse:
+    """Aimed at the bundle owner, not the submitter: show the parser's words."""
+    return HTMLResponse(handlers.page("Cannot accept submissions", (
+        f"<h1>{html.escape(bundle_id)} cannot accept submissions</h1>"
+        f"<p>Its intake.yml is invalid:</p>"
+        f"<pre>{html.escape(str(exc))}</pre>")), status_code=500)
 
 
 async def index(request):
@@ -56,11 +66,18 @@ async def index(request):
     ids = [b for b in bundles.allowed_ids(cfg, user)
            if (BUNDLES_DIR / b).is_dir()]
     if not ids:
-        return HTMLResponse("<h1>Nothing to file into</h1><p>Your account has "
-                            "no bundle it may write to. Ask the wiki owner.</p>")
-    links = "".join(f"<li><a href='/intake/{html.escape(b)}'>{html.escape(b)}</a></li>"
-                    for b in ids)
-    return HTMLResponse(f"<h1>Add to the wiki</h1><ul>{links}</ul>")
+        return HTMLResponse(handlers.page("Nothing to file into", (
+            "<h1>Nothing to file into</h1><p>Your account has no bundle it "
+            "may write to. Ask the wiki owner.</p>")))
+    links = "".join(
+        f"<li><a href='/intake/{html.escape(b)}'>{html.escape(b)}</a></li>"
+        for b in ids)
+    return HTMLResponse(handlers.page("Add to the wiki", (
+        f"<h1>Add to the wiki</h1>"
+        f"<p class=lede>Signed in as "
+        f"{html.escape(note.author_from_email(user))}. "
+        f"Pick where this note belongs.</p>"
+        f"<ul class=bundles>{links}</ul>")))
 
 
 def _load(bundle_id: str, user: str):
@@ -81,10 +98,7 @@ async def form(request):
     try:
         bundle, form_cfg = _load(bundle_id, user)
     except config.ConfigError as exc:
-        return HTMLResponse(
-            f"<h1>{html.escape(bundle_id)} cannot accept submissions</h1>"
-            f"<p>Its intake.yml is invalid: {html.escape(str(exc))}</p>",
-            status_code=500)
+        return _bad_config(bundle_id, exc)
     if bundle is None:
         return _forbidden(f"No bundle {bundle_id!r} you may write to.")
     return HTMLResponse(handlers.render_form(
@@ -119,9 +133,7 @@ async def submit(request):
     try:
         bundle, form_cfg = _load(bundle_id, user)
     except config.ConfigError as exc:
-        return HTMLResponse(
-            f"<h1>Invalid intake.yml</h1><p>{html.escape(str(exc))}</p>",
-            status_code=500)
+        return _bad_config(bundle_id, exc)
     if bundle is None:
         return _forbidden(f"No bundle {bundle_id!r} you may write to.")
     values = {k: str(v) for k, v in (await request.form()).items()}
